@@ -20,12 +20,19 @@ class GameScene: SKScene, SKPhysicsContactDelegate  {
     let wallCategory: UInt32 = 1 << 2       // 0...00100
     let scoreCategory: UInt32 = 1 << 3      // 0...01000
     let heartCategory: UInt32 = 1 << 4      // 0...10000//課題追加
-    
+    let itemscoreCategory: UInt32 = 1 << 5    // 課題追加
+
     // スコア用
     var score = 0
     var scoreLabelNode:SKLabelNode!
     var bestScoreLabelNode:SKLabelNode!
     let userDefaults:UserDefaults = UserDefaults.standard
+    
+    // アイテム取得スコア用
+    var itemscore = 0
+    var itemscoreLabelNode:SKLabelNode!
+    var itembestScoreLabelNode:SKLabelNode!
+    let itemuserDefaults:UserDefaults = UserDefaults.standard
     
     // SKView上にシーンが表示されたときに呼ばれるメソッド
     override func didMove(to view: SKView) {
@@ -52,10 +59,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate  {
         // 各種スプライトを生成する処理をメソッドに分割
         setupGround()
         setupCloud()
-        setupWall()
+//        setupWall()
         setupBird()
         setupScoreLabel()
         setupHeart()//課題追加
+        setupItemScoreLabel()//課題追加（アイテム取得時のスコアラベル）
     }
     
     // 画面をタップした時に呼ばれる
@@ -192,7 +200,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate  {
             
             // 0〜random_y_rangeまでのランダム値を生成
             let random_y = CGFloat.random(in: 0..<random_y_range)
-           print("壁\(random_y_range)")
+            
             // Y軸の下限にランダムな値を足して、下の壁のY座標を決定
             let under_wall_y = under_wall_lowest_y + random_y
             
@@ -269,9 +277,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate  {
         
         // 衝突のカテゴリー設定
         bird.physicsBody?.categoryBitMask = birdCategory
-        bird.physicsBody?.collisionBitMask = groundCategory | wallCategory
-        bird.physicsBody?.contactTestBitMask = groundCategory | wallCategory
-        
+        bird.physicsBody?.collisionBitMask = groundCategory | wallCategory | heartCategory
+        bird.physicsBody?.contactTestBitMask = groundCategory | wallCategory | heartCategory
         
         // アニメーションを設定
         bird.run(flap)
@@ -301,6 +308,28 @@ class GameScene: SKScene, SKPhysicsContactDelegate  {
                 userDefaults.set(bestScore, forKey: "BEST")
                 userDefaults.synchronize()
             }
+            //課題追加（アイテム取得時スコア更新）
+        } else if (contact.bodyA.categoryBitMask & heartCategory) == heartCategory || (contact.bodyB.categoryBitMask & heartCategory) == heartCategory {
+            
+            // アイテムと衝突した
+            print("ScoreUp")
+            itemscore += 1
+            itemscoreLabelNode.text = "Item Score:\(itemscore)"
+            
+            // ベストスコア更新か確認する
+            var itembestScore = itemuserDefaults.integer(forKey: "ITEMBEST")
+            if itemscore > itembestScore {
+                itembestScore = itemscore
+                itembestScoreLabelNode.text = "Item Best Score:\(itembestScore)"
+                itemuserDefaults.set(itembestScore, forKey: "ITEMBEST")
+                itemuserDefaults.synchronize()
+            }
+            if (contact.bodyA.categoryBitMask & heartCategory) == heartCategory{
+                contact.bodyA.node?.removeFromParent()
+            }
+            if (contact.bodyB.categoryBitMask & heartCategory) == heartCategory{
+                contact.bodyB.node?.removeFromParent()
+            }
         } else {
             // 壁か地面と衝突した
             print("GameOver")
@@ -321,12 +350,16 @@ class GameScene: SKScene, SKPhysicsContactDelegate  {
         score = 0
         scoreLabelNode.text = "Score:\(score)" 
         
+        itemscore = 0
+        itemscoreLabelNode.text = "Score:\(itemscore)"
+        
         bird.position = CGPoint(x: self.frame.size.width * 0.2, y:self.frame.size.height * 0.7)
         bird.physicsBody?.velocity = CGVector.zero
-        bird.physicsBody?.collisionBitMask = groundCategory | wallCategory
+        bird.physicsBody?.collisionBitMask = groundCategory | wallCategory | heartCategory
         bird.zRotation = 0
         
         wallNode.removeAllChildren()
+        heartNode.removeAllChildren()
         
         bird.speed = 1
         scrollNode.speed = 1
@@ -370,20 +403,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate  {
         
         // 2つのアニメーションを順に実行するアクションを作成
         let heartAnimation = SKAction.sequence([moveHeart, removeHeart])
-        
-        // 鳥の画像サイズを取得
-        let birdSize = SKTexture(imageNamed: "bird_a").size()
-        
-        // 鳥が通り抜ける隙間の長さを鳥のサイズの3倍とする
-        let slit_length = birdSize.height / 2
-        
-        // 隙間位置の上下の振れ幅を鳥のサイズの2.5倍とする
-        let random_y_range = birdSize.height / 2
-        // アイテムのY軸下限位置(中央位置から下方向の最大振れ幅でアイテムを表示する位置)を計算
-        let groundSize = SKTexture(imageNamed: "ground").size()
-        let center_y = groundSize.height + (self.frame.size.height - groundSize.height) / 2
-        let under_heart_lowest_y = center_y - slit_length / 2 - heartTexture.size().height / 2 - random_y_range / 2
-        
+
+     
         // アイテムを生成するアクションを作成
         let createHeartAnimation = SKAction.run({
             // アイテム関連のノードを乗せるノードを作成
@@ -392,14 +413,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate  {
             heart.zPosition = -50 // 壁と同じ
             
             // 0〜random_y_rangeまでのランダム値を生成
-            let random_y = CGFloat.random(in: 0..<random_y_range)
-            print("通過\(random_y_range)")
-            // Y軸の下限にランダムな値を足して、下の壁のY座標を決定
-            let under_heart_y = under_heart_lowest_y + random_y
+            let random_y = CGFloat.random(in: 100..<500)
             
             // アイテムを作成
             let item = SKSpriteNode(texture: heartTexture)
-            item.position = CGPoint(x: 0, y: under_heart_y)
+            item.position = CGPoint(x: 0, y: random_y)
+            
+            // アイテムの大きさをx方向に0.2倍　y方向に0.2倍する
+            item.xScale = 0.2
+            item.yScale = 0.2
             
             // スプライトに物理演算を設定する
             item.physicsBody = SKPhysicsBody(rectangleOf: heartTexture.size())
@@ -409,6 +431,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate  {
             item.physicsBody?.isDynamic = false
             
             heart.addChild(item)
+            
+            // スコアアップ用のノード
+            let itemscoreNode = SKNode()
+            itemscoreNode.position = CGPoint(x: item.size.width , y: item.frame.origin.y)
+            itemscoreNode.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: item.size.width, height: item.size.height))
+            itemscoreNode.physicsBody?.isDynamic = false
+            itemscoreNode.physicsBody?.categoryBitMask = self.itemscoreCategory
+            itemscoreNode.physicsBody?.contactTestBitMask = self.birdCategory
+            heart.addChild(itemscoreNode)
             
             heart.run(heartAnimation)
             
@@ -423,5 +454,26 @@ class GameScene: SKScene, SKPhysicsContactDelegate  {
         
         heartNode.run(repeatForeverAnimation)
         
+    }
+    //課題追加(アイテムスコアラベル表示)
+    func setupItemScoreLabel() {
+        itemscore = 0
+        itemscoreLabelNode = SKLabelNode()
+        itemscoreLabelNode.fontColor = UIColor.black
+        itemscoreLabelNode.position = CGPoint(x: 10, y: self.frame.size.height - 120)
+        itemscoreLabelNode.zPosition = 100 // 一番手前に表示する
+        itemscoreLabelNode.horizontalAlignmentMode = SKLabelHorizontalAlignmentMode.left
+        itemscoreLabelNode.text = "Item Score:\(itemscore)"
+        self.addChild(itemscoreLabelNode)
+        
+        itembestScoreLabelNode = SKLabelNode()
+        itembestScoreLabelNode.fontColor = UIColor.black
+        itembestScoreLabelNode.position = CGPoint(x: 10, y: self.frame.size.height - 150)
+        itembestScoreLabelNode.zPosition = 100 // 一番手前に表示する
+        itembestScoreLabelNode.horizontalAlignmentMode = SKLabelHorizontalAlignmentMode.left
+        
+        let itembestScore = itemuserDefaults.integer(forKey: "ITEMBEST")
+        itembestScoreLabelNode.text = "Item Best Score:\(itembestScore)"
+        self.addChild(itembestScoreLabelNode)
     }
 }
