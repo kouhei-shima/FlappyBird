@@ -59,7 +59,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate  {
         // 各種スプライトを生成する処理をメソッドに分割
         setupGround()
         setupCloud()
-//        setupWall()
+        setupWall()
         setupBird()
         setupScoreLabel()
         setupHeart()//課題追加
@@ -324,6 +324,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate  {
                 itemuserDefaults.set(itembestScore, forKey: "ITEMBEST")
                 itemuserDefaults.synchronize()
             }
+            //アイテム衝突時にアイテムを取り除く
             if (contact.bodyA.categoryBitMask & heartCategory) == heartCategory{
                 contact.bodyA.node?.removeFromParent()
             }
@@ -351,7 +352,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate  {
         scoreLabelNode.text = "Score:\(score)" 
         
         itemscore = 0
-        itemscoreLabelNode.text = "Score:\(itemscore)"
+        itemscoreLabelNode.text = "ItemScore:\(itemscore)"
         
         bird.position = CGPoint(x: self.frame.size.width * 0.2, y:self.frame.size.height * 0.7)
         bird.physicsBody?.velocity = CGVector.zero
@@ -413,7 +414,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate  {
             heart.zPosition = -50 // 壁と同じ
             
             // 0〜random_y_rangeまでのランダム値を生成
-            let random_y = CGFloat.random(in: 100..<500)
+            let random_y = CGFloat.random(in: 0..<500)
             
             // アイテムを作成
             let item = SKSpriteNode(texture: heartTexture)
@@ -432,7 +433,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate  {
             
             heart.addChild(item)
             
-            // スコアアップ用のノード
+            // 衝突時のスコアアップ用のノード
             let itemscoreNode = SKNode()
             itemscoreNode.position = CGPoint(x: item.size.width , y: item.frame.origin.y)
             itemscoreNode.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: item.size.width, height: item.size.height))
