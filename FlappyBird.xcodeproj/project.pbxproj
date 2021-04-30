@@ -14,6 +14,7 @@
 		FC0C9D72262C147200929194 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FC0C9D71262C147200929194 /* Assets.xcassets */; };
 		FC0C9D75262C147200929194 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = FC0C9D73262C147200929194 /* LaunchScreen.storyboard */; };
 		FC0C9D7F262C1A3D00929194 /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC0C9D7E262C1A3D00929194 /* GameScene.swift */; };
+		FC0C9D8B263BC83800929194 /* koukaon.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = FC0C9D8A263BC83800929194 /* koukaon.mp3 */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +27,7 @@
 		FC0C9D74262C147200929194 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		FC0C9D76262C147200929194 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		FC0C9D7E262C1A3D00929194 /* GameScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameScene.swift; sourceTree = "<group>"; };
+		FC0C9D8A263BC83800929194 /* koukaon.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = koukaon.mp3; path = ../../../koukaon.mp3; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +60,7 @@
 		FC0C9D67262C146F00929194 /* FlappyBird */ = {
 			isa = PBXGroup;
 			children = (
+				FC0C9D8A263BC83800929194 /* koukaon.mp3 */,
 				FC0C9D68262C146F00929194 /* AppDelegate.swift */,
 				FC0C9D6A262C146F00929194 /* SceneDelegate.swift */,
 				FC0C9D6C262C146F00929194 /* ViewController.swift */,
@@ -128,6 +131,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				FC0C9D75262C147200929194 /* LaunchScreen.storyboard in Resources */,
+				FC0C9D8B263BC83800929194 /* koukaon.mp3 in Resources */,
 				FC0C9D72262C147200929194 /* Assets.xcassets in Resources */,
 				FC0C9D70262C146F00929194 /* Main.storyboard in Resources */,
 			);

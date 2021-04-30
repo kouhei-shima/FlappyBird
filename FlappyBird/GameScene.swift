@@ -6,14 +6,14 @@
 //
 
 import SpriteKit
+import AVFoundation
 
-class GameScene: SKScene, SKPhysicsContactDelegate  {
-    
+class GameScene: SKScene, SKPhysicsContactDelegate,AVAudioPlayerDelegate {
+    var audioPlayer: AVAudioPlayer! //効果音
     var scrollNode:SKNode!
     var wallNode:SKNode!
     var bird:SKSpriteNode!
     var heartNode:SKNode!//課題追加
-    
     // 衝突判定カテゴリー
     let birdCategory: UInt32 = 1 << 0       // 0...00001
     let groundCategory: UInt32 = 1 << 1     // 0...00010
@@ -21,7 +21,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate  {
     let scoreCategory: UInt32 = 1 << 3      // 0...01000
     let heartCategory: UInt32 = 1 << 4      // 0...10000//課題追加
     let itemscoreCategory: UInt32 = 1 << 5    // 課題追加
-
     // スコア用
     var score = 0
     var scoreLabelNode:SKLabelNode!
@@ -65,7 +64,25 @@ class GameScene: SKScene, SKPhysicsContactDelegate  {
         setupHeart()//課題追加
         setupItemScoreLabel()//課題追加（アイテム取得時のスコアラベル）
     }
-    
+     //効果音追加
+    func playSound(name: String) {
+           guard let path = Bundle.main.path(forResource: name, ofType: "mp3") else {
+               print("音源ファイルが見つかりません")
+               return
+           }
+
+           do {
+               // AVAudioPlayerのインスタンス化
+               audioPlayer = try AVAudioPlayer(contentsOf: URL(fileURLWithPath: path))
+
+               // AVAudioPlayerのデリゲートをセット
+               audioPlayer.delegate = self
+
+               // 音声の再生
+               audioPlayer.play()
+           } catch {
+           }
+       }
     // 画面をタップした時に呼ばれる
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         if scrollNode.speed > 0 {
@@ -331,6 +348,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate  {
             if (contact.bodyB.categoryBitMask & heartCategory) == heartCategory{
                 contact.bodyB.node?.removeFromParent()
             }
+            playSound(name: "koukaon") //効果音
         } else {
             // 壁か地面と衝突した
             print("GameOver")
@@ -392,7 +410,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate  {
         // アイテムの画像を読み込む
         let heartTexture = SKTexture(imageNamed: "heart")
         heartTexture.filteringMode = .linear
-        
         // 移動する距離を計算
         let movingDistance = CGFloat(self.frame.size.width + heartTexture.size().width)
         
@@ -404,8 +421,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate  {
         
         // 2つのアニメーションを順に実行するアクションを作成
         let heartAnimation = SKAction.sequence([moveHeart, removeHeart])
-
-     
+        
+        
         // アイテムを生成するアクションを作成
         let createHeartAnimation = SKAction.run({
             // アイテム関連のノードを乗せるノードを作成
@@ -425,22 +442,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate  {
             item.yScale = 0.2
             
             // スプライトに物理演算を設定する
-            item.physicsBody = SKPhysicsBody(rectangleOf: heartTexture.size())
+            item.physicsBody = SKPhysicsBody(circleOfRadius: item.size.height / 2)
             item.physicsBody?.categoryBitMask = self.heartCategory
             
             // 衝突の時に動かないように設定する
             item.physicsBody?.isDynamic = false
             
             heart.addChild(item)
-            
-            // 衝突時のスコアアップ用のノード
-            let itemscoreNode = SKNode()
-            itemscoreNode.position = CGPoint(x: item.size.width , y: item.frame.origin.y)
-            itemscoreNode.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: item.size.width, height: item.size.height))
-            itemscoreNode.physicsBody?.isDynamic = false
-            itemscoreNode.physicsBody?.categoryBitMask = self.itemscoreCategory
-            itemscoreNode.physicsBody?.contactTestBitMask = self.birdCategory
-            heart.addChild(itemscoreNode)
             
             heart.run(heartAnimation)
             
@@ -477,4 +485,5 @@ class GameScene: SKScene, SKPhysicsContactDelegate  {
         itembestScoreLabelNode.text = "Item Best Score:\(itembestScore)"
         self.addChild(itembestScoreLabelNode)
     }
+
 }
